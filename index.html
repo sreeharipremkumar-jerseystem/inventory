@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>JerseyStem Inventory</title>
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f1419;
+            --surface: #1a2028;
+            --surface-raised: #232b35;
+            --border: #2f3942;
+            --text: #e7e9ea;
+            --text-muted: #8b98a5;
+            --accent: #1d9bf0;
+            --accent-hover: #1a8cd8;
+            --success: #00ba7c;
+            --warning: #f59e0b;
+            --danger: #f4212e;
+            --danger-bg: rgba(244, 33, 46, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+
+        /* Header */
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-weight: 600;
+            font-size: 18px;
+            color: var(--accent);
+        }
+
+        .logo span {
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .user-info {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 13px;
+            padding: 4px 8px;
+            margin-left: 8px;
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+            padding: 24px 0;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Login Screen */
+        .login-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px 24px;
+            margin-top: 40px;
+        }
+
+        .login-card h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .login-card p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 16px;
+            font-family: inherit;
+            transition: border-color 0.15s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .error-msg {
+            color: var(--danger);
+            font-size: 13px;
+            margin-top: 6px;
+            display: none;
+        }
+
+        .error-msg.show {
+            display: block;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s;
+            font-family: inherit;
+        }
+
+        .btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: var(--surface-raised);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        /* Connection Status Banner */
+        .status-banner {
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-banner.connected {
+            background: rgba(0, 186, 124, 0.15);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+
+        .status-banner.offline {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid var(--warning);
+            color: var(--warning);
+        }
+
+        .status-banner.error {
+            background: var(--danger-bg);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        /* Loading Spinner */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 12px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* School Select Screen */
+        .school-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .school-item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .school-item:hover, .school-item:active {
+            background: var(--surface-raised);
+            border-color: var(--accent);
+        }
+
+        .school-name {
+            font-weight: 500;
+        }
+
+        .school-kits {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .chevron {
+            color: var(--text-muted);
+            font-size: 20px;
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .breadcrumb a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .breadcrumb span {
+            color: var(--text-muted);
+        }
+
+        .breadcrumb .current {
+            color: var(--text);
+        }
+
+        /* Kit List */
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .kit-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .kit-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .kit-card:hover, .kit-card:active {
+            background: var(--surface-raised);
+            border-color: var(--accent);
+        }
+
+        .kit-card.has-issues {
+            border-color: var(--danger);
+            background: var(--danger-bg);
+        }
+
+        .kit-number {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .kit-card.has-issues .kit-number {
+            color: var(--danger);
+        }
+
+        .kit-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .kit-status {
+            font-size: 11px;
+            margin-top: 8px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .kit-status.complete {
+            background: rgba(0, 186, 124, 0.15);
+            color: var(--success);
+        }
+
+        .kit-status.pending {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+        }
+
+        .kit-status.issues {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        /* Inventory Table */
+        .inventory-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .save-indicator {
+            font-size: 12px;
+            color: var(--success);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .save-indicator.show {
+            opacity: 1;
+        }
+
+        .save-indicator.saving {
+            color: var(--warning);
+        }
+
+        .save-indicator.error {
+            color: var(--danger);
+        }
+
+        .inventory-table {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: grid;
+            grid-template-columns: 1fr 52px 52px 52px;
+            gap: 4px;
+            padding: 12px;
+            background: var(--surface-raised);
+            border-bottom: 1px solid var(--border);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        .table-header span:not(:first-child) {
+            text-align: center;
+        }
+
+        .table-row {
+            display: grid;
+            grid-template-columns: 1fr 52px 52px 52px;
+            gap: 4px;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            align-items: center;
+            transition: background 0.15s;
+        }
+
+        .table-row:last-child {
+            border-bottom: none;
+        }
+
+        .table-row.discrepancy {
+            background: var(--danger-bg);
+        }
+
+        .part-name {
+            font-size: 14px;
+        }
+
+        .table-row input {
+            width: 100%;
+            padding: 8px 4px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 16px;
+            text-align: center;
+            font-family: inherit;
+        }
+
+        .table-row input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .table-row .expected {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* Footer */
+        .footer-actions {
+            margin-top: 24px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .footer-actions .btn {
+            flex: 1;
+        }
+
+        /* Refresh Button */
+        .refresh-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px 8px;
+        }
+
+        .refresh-btn:disabled {
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">JerseyStem <span>Inventory</span></div>
+            <div id="header-user" style="display: none;">
+                <span class="user-info" id="user-display"></span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Login Screen -->
+        <div id="login-screen" class="screen active">
+            <div class="login-card">
+                <h1>Welcome</h1>
+                <p>Sign in with your @mystemclub.org email</p>
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="email-input" placeholder="yourname@mystemclub.org" required>
+                        <div class="error-msg" id="email-error">Please use an @mystemclub.org email</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="password-input" placeholder="Enter password" required>
+                        <div class="error-msg" id="password-error">Incorrect password</div>
+                    </div>
+                    <button type="submit" class="btn">Sign In</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- School Select Screen -->
+        <div id="school-screen" class="screen">
+            <div id="connection-status" class="status-banner connected">
+                <span class="status-dot"></span>
+                <span id="status-text">Connected to Google Sheets</span>
+                <button class="refresh-btn" onclick="refreshData()" id="refresh-btn">↻ Refresh</button>
+            </div>
+            <h2 class="section-title">Select School</h2>
+            <div id="school-loading" class="loading">
+                <div class="spinner"></div>
+                <span>Loading schools...</span>
+            </div>
+            <div class="school-list" id="school-list"></div>
+        </div>
+
+        <!-- Kit Select Screen -->
+        <div id="kit-screen" class="screen">
+            <div class="breadcrumb">
+                <a href="#" onclick="showScreen('school-screen'); return false;">Schools</a>
+                <span>›</span>
+                <span class="current" id="current-school-name"></span>
+            </div>
+            <h2 class="section-title">Select Kit</h2>
+            <div class="kit-grid" id="kit-grid"></div>
+            <div class="footer-actions">
+                <button class="btn btn-secondary" onclick="showScreen('school-screen')">← Back</button>
+            </div>
+        </div>
+
+        <!-- Inventory Screen -->
+        <div id="inventory-screen" class="screen">
+            <div class="breadcrumb">
+                <a href="#" onclick="showScreen('school-screen'); return false;">Schools</a>
+                <span>›</span>
+                <a href="#" onclick="showScreen('kit-screen'); return false;" id="breadcrumb-school"></a>
+                <span>›</span>
+                <span class="current" id="current-kit-name"></span>
+            </div>
+            <div class="inventory-header">
+                <h2 class="section-title" style="margin-bottom: 0;">Inventory</h2>
+                <span class="save-indicator" id="save-indicator">✓ Synced</span>
+            </div>
+            <div class="inventory-table">
+                <div class="table-header">
+                    <span>Part</span>
+                    <span>Exp</span>
+                    <span>Start</span>
+                    <span>End</span>
+                </div>
+                <div id="inventory-rows"></div>
+            </div>
+            <div class="footer-actions">
+                <button class="btn btn-secondary" onclick="showScreen('kit-screen')">← Back</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // ==========================================
+        // CONFIGURATION - UPDATE THIS URL!
+        // ==========================================
+        const API_URL = 'https://script.google.com/macros/s/AKfycbwPpZvJQB4a3HzW_agwNRSpRdSbfPvSoR273nYBOauLOzqSC44BxhaJ9GFkXLXtVBkx/exec';
+        // After deploying your Google Apps Script, paste the URL above
+        // It will look like: https://script.google.com/macros/s/xxxxx/exec
+        
+        const SHARED_PASSWORD = 'jerseystem2025';
+        
+        const SCHOOLS = [
+            { id: 'school1', name: 'Lincoln Elementary', kits: 5 },
+            { id: 'school2', name: 'Washington Middle', kits: 8 },
+            { id: 'school3', name: 'Jefferson Academy', kits: 6 },
+            { id: 'school4', name: 'Roosevelt School', kits: 4 },
+            { id: 'school5', name: 'Kennedy Elementary', kits: 7 },
+            { id: 'school6', name: 'Adams Middle', kits: 5 },
+            { id: 'school7', name: 'Madison School', kits: 6 },
+            { id: 'school8', name: 'Monroe Elementary', kits: 4 },
+            { id: 'school9', name: 'Jackson Academy', kits: 8 },
+            { id: 'school10', name: 'Hamilton Middle', kits: 5 }
+        ];
+
+        const PARTS = [
+            { id: 'hub', name: 'Large Hub', expected: 1 },
+            { id: 'battery', name: 'Hub Battery', expected: 1 },
+            { id: 'large_motor', name: 'Large Motor', expected: 1 },
+            { id: 'medium_motor', name: 'Medium Motor', expected: 2 },
+            { id: 'distance_sensor', name: 'Distance Sensor', expected: 1 },
+            { id: 'color_sensor', name: 'Color Sensor', expected: 1 },
+            { id: 'force_sensor', name: 'Force Sensor', expected: 1 },
+            { id: 'usb_cable', name: 'USB Cable', expected: 1 },
+            { id: 'wheel', name: 'Large Wheel (ø56)', expected: 4 },
+            { id: 'rubber_band', name: 'Rubber Band', expected: 2 },
+            { id: 'frame_11x15', name: 'Frame 11x15', expected: 2 },
+            { id: 'frame_7x11', name: 'Frame 7x11', expected: 2 },
+            { id: 'frame_5x7', name: 'Frame 5x7', expected: 2 },
+            { id: 'panel', name: 'Panel 11x19', expected: 2 }
+        ];
+
+        // ========== STATE ==========
+        let currentUser = null;
+        let currentSchool = null;
+        let currentKit = null;
+        let inventoryCache = {};
+        let isOnline = true;
+
+        // ========== API FUNCTIONS ==========
+        async function fetchInventory() {
+            if (API_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+                // Demo mode - use localStorage
+                updateConnectionStatus('offline', 'Demo Mode - Local Storage Only');
+                return loadFromLocalStorage();
+            }
+            
+            try {
+                const response = await fetch(API_URL);
+                const result = await response.json();
+                
+                if (result.success) {
+                    inventoryCache = result.data;
+                    // Also save to localStorage as backup
+                    localStorage.setItem('inventory_cache', JSON.stringify(inventoryCache));
+                    updateConnectionStatus('connected', 'Connected to Google Sheets');
+                    isOnline = true;
+                    return inventoryCache;
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                updateConnectionStatus('error', 'Offline - Using cached data');
+                isOnline = false;
+                // Fall back to localStorage
+                return loadFromLocalStorage();
+            }
+        }
+
+        async function saveToServer(schoolId, kit, partId, field, value) {
+            if (API_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+                // Demo mode - use localStorage
+                saveToLocalStorage(schoolId, kit, partId, field, value);
+                showSaveIndicator('saved');
+                return;
+            }
+
+            showSaveIndicator('saving');
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        school_id: schoolId,
+                        kit: kit,
+                        part_id: partId,
+                        field: field,
+                        value: value,
+                        user: currentUser
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Update local cache
+                    const key = `${schoolId}_kit${kit}_${partId}`;
+                    if (!inventoryCache[key]) {
+                        inventoryCache[key] = { school_id: schoolId, kit, part_id: partId, start: '', end: '' };
+                    }
+                    inventoryCache[key][field] = value;
+                    localStorage.setItem('inventory_cache', JSON.stringify(inventoryCache));
+                    
+                    showSaveIndicator('saved');
+                    isOnline = true;
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                // Save to localStorage as fallback
+                saveToLocalStorage(schoolId, kit, partId, field, value);
+                showSaveIndicator('offline');
+                isOnline = false;
+            }
+        }
+
+        // ========== LOCAL STORAGE FALLBACK ==========
+        function loadFromLocalStorage() {
+            const cached = localStorage.getItem('inventory_cache');
+            if (cached) {
+                inventoryCache = JSON.parse(cached);
+            }
+            return inventoryCache;
+        }
+
+        function saveToLocalStorage(schoolId, kit, partId, field, value) {
+            const key = `${schoolId}_kit${kit}_${partId}`;
+            if (!inventoryCache[key]) {
+                inventoryCache[key] = { school_id: schoolId, kit, part_id: partId, start: '', end: '' };
+            }
+            inventoryCache[key][field] = value;
+            localStorage.setItem('inventory_cache', JSON.stringify(inventoryCache));
+        }
+
+        // ========== UI HELPERS ==========
+        function updateConnectionStatus(status, text) {
+            const banner = document.getElementById('connection-status');
+            const statusText = document.getElementById('status-text');
+            
+            banner.className = 'status-banner ' + status;
+            statusText.textContent = text;
+        }
+
+        function showSaveIndicator(state) {
+            const indicator = document.getElementById('save-indicator');
+            indicator.classList.remove('saving', 'error');
+            
+            switch (state) {
+                case 'saving':
+                    indicator.textContent = '⟳ Saving...';
+                    indicator.classList.add('show', 'saving');
+                    break;
+                case 'saved':
+                    indicator.textContent = '✓ Synced';
+                    indicator.classList.add('show');
+                    setTimeout(() => indicator.classList.remove('show'), 1500);
+                    break;
+                case 'offline':
+                    indicator.textContent = '⚠ Saved locally';
+                    indicator.classList.add('show', 'error');
+                    setTimeout(() => indicator.classList.remove('show'), 2000);
+                    break;
+            }
+        }
+
+        async function refreshData() {
+            const btn = document.getElementById('refresh-btn');
+            btn.disabled = true;
+            btn.textContent = '⟳ Loading...';
+            
+            await fetchInventory();
+            renderSchools();
+            
+            btn.disabled = false;
+            btn.textContent = '↻ Refresh';
+        }
+
+        // ========== AUTH ==========
+        function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('email-input').value.trim().toLowerCase();
+            const password = document.getElementById('password-input').value;
+            
+            document.getElementById('email-error').classList.remove('show');
+            document.getElementById('password-error').classList.remove('show');
+
+            if (!email.endsWith('@mystemclub.org')) {
+                document.getElementById('email-error').classList.add('show');
+                return;
+            }
+
+            if (password !== SHARED_PASSWORD) {
+                document.getElementById('password-error').classList.add('show');
+                return;
+            }
+
+            currentUser = email.split('@')[0];
+            document.getElementById('user-display').textContent = currentUser;
+            document.getElementById('header-user').style.display = 'block';
+            
+            // Save login
+            localStorage.setItem('current_user', currentUser);
+            
+            showScreen('school-screen');
+        }
+
+        function logout() {
+            currentUser = null;
+            currentSchool = null;
+            currentKit = null;
+            localStorage.removeItem('current_user');
+            document.getElementById('header-user').style.display = 'none';
+            document.getElementById('email-input').value = '';
+            document.getElementById('password-input').value = '';
+            showScreen('login-screen');
+        }
+
+        // ========== NAVIGATION ==========
+        async function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+
+            if (screenId === 'school-screen') {
+                document.getElementById('school-loading').style.display = 'flex';
+                document.getElementById('school-list').innerHTML = '';
+                await fetchInventory();
+                document.getElementById('school-loading').style.display = 'none';
+                renderSchools();
+            } else if (screenId === 'kit-screen') {
+                renderKits();
+            } else if (screenId === 'inventory-screen') {
+                renderInventory();
+            }
+        }
+
+        // ========== RENDER FUNCTIONS ==========
+        function renderSchools() {
+            const container = document.getElementById('school-list');
+            container.innerHTML = SCHOOLS.map(school => `
+                <div class="school-item" onclick="selectSchool('${school.id}')">
+                    <div>
+                        <div class="school-name">${school.name}</div>
+                        <div class="school-kits">${school.kits} kits</div>
+                    </div>
+                    <span class="chevron">›</span>
+                </div>
+            `).join('');
+        }
+
+        function selectSchool(schoolId) {
+            currentSchool = SCHOOLS.find(s => s.id === schoolId);
+            document.getElementById('current-school-name').textContent = currentSchool.name;
+            document.getElementById('breadcrumb-school').textContent = currentSchool.name;
+            showScreen('kit-screen');
+        }
+
+        function renderKits() {
+            const container = document.getElementById('kit-grid');
+            let html = '';
+            
+            for (let i = 1; i <= currentSchool.kits; i++) {
+                const status = getKitStatus(currentSchool.id, i);
+                const hasIssues = status === 'issues';
+                
+                html += `
+                    <div class="kit-card ${hasIssues ? 'has-issues' : ''}" onclick="selectKit(${i})">
+                        <div class="kit-number">${i}</div>
+                        <div class="kit-label">Kit</div>
+                        <div class="kit-status ${status}">${getStatusLabel(status)}</div>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function getKitStatus(schoolId, kitNum) {
+            let hasStart = false;
+            let hasEnd = false;
+            let hasIssue = false;
+            
+            for (const part of PARTS) {
+                const key = `${schoolId}_kit${kitNum}_${part.id}`;
+                const data = inventoryCache[key];
+                
+                if (data) {
+                    if (data.start !== '' && data.start !== undefined) hasStart = true;
+                    if (data.end !== '' && data.end !== undefined) {
+                        hasEnd = true;
+                        const startVal = parseInt(data.start) || part.expected;
+                        const endVal = parseInt(data.end);
+                        if (endVal < startVal) hasIssue = true;
+                    }
+                }
+            }
+            
+            if (hasIssue) return 'issues';
+            if (hasEnd) return 'complete';
+            if (hasStart) return 'pending';
+            return 'pending';
+        }
+
+        function getStatusLabel(status) {
+            switch (status) {
+                case 'complete': return '✓ Complete';
+                case 'issues': return '⚠ Issues';
+                default: return 'Pending';
+            }
+        }
+
+        function selectKit(kitNum) {
+            currentKit = kitNum;
+            document.getElementById('current-kit-name').textContent = `Kit ${kitNum}`;
+            showScreen('inventory-screen');
+        }
+
+        function renderInventory() {
+            const container = document.getElementById('inventory-rows');
+            
+            container.innerHTML = PARTS.map(part => {
+                const key = `${currentSchool.id}_kit${currentKit}_${part.id}`;
+                const data = inventoryCache[key] || {};
+                const startVal = data.start !== undefined ? data.start : '';
+                const endVal = data.end !== undefined ? data.end : '';
+                const startNum = parseInt(startVal) || part.expected;
+                const hasDiscrepancy = endVal !== '' && parseInt(endVal) < startNum;
+                
+                return `
+                    <div class="table-row ${hasDiscrepancy ? 'discrepancy' : ''}">
+                        <span class="part-name">${part.name}</span>
+                        <span class="expected">${part.expected}</span>
+                        <input type="number" 
+                               inputmode="numeric" 
+                               pattern="[0-9]*"
+                               min="0" 
+                               value="${startVal}"
+                               data-part="${part.id}"
+                               data-field="start"
+                               onchange="updateValue(this)"
+                               onfocus="this.select()">
+                        <input type="number" 
+                               inputmode="numeric" 
+                               pattern="[0-9]*"
+                               min="0" 
+                               value="${endVal}"
+                               data-part="${part.id}"
+                               data-field="end"
+                               onchange="updateValue(this)"
+                               onfocus="this.select()">
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function updateValue(input) {
+            const partId = input.dataset.part;
+            const field = input.dataset.field;
+            const value = input.value;
+            
+            await saveToServer(currentSchool.id, currentKit, partId, field, value);
+            
+            // Re-render to update discrepancy highlighting
+            renderInventory();
+        }
+
+        // ========== INIT ==========
+        (function init() {
+            // Check for saved login
+            const savedUser = localStorage.getItem('current_user');
+            if (savedUser) {
+                currentUser = savedUser;
+                document.getElementById('user-display').textContent = currentUser;
+                document.getElementById('header-user').style.display = 'block';
+                showScreen('school-screen');
+            } else {
+                renderSchools();
+            }
+        })();
+    </script>
+</body>
+</html>
