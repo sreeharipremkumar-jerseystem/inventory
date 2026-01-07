@@ -605,7 +605,7 @@
     </main>
 
     <script>
-        let saveTimeout = null;
+        let saveTimeouts = {};
         // ==========================================
         // CONFIGURATION - UPDATE THIS URL!
         // ==========================================
@@ -974,28 +974,31 @@
             const field = input.dataset.field;
             const value = input.value;
             
+            // Unique key for this specific input
+            const timeoutKey = `${partId}_${field}`;
+            
             // Update local cache immediately (so UI feels responsive)
-            const key = `${currentSchool.id}_kit${currentKit}_${partId}`;
-            if (!inventoryCache[key]) {
-                inventoryCache[key] = { school_id: currentSchool.id, kit: currentKit, part_id: partId, start: '', end: '' };
+            const cacheKey = `${currentSchool.id}_kit${currentKit}_${partId}`;
+            if (!inventoryCache[cacheKey]) {
+                inventoryCache[cacheKey] = { school_id: currentSchool.id, kit: currentKit, part_id: partId, start: '', end: '' };
             }
-            inventoryCache[key][field] = value;
+            inventoryCache[cacheKey][field] = value;
             
             // Show "saving" indicator
             showSaveIndicator('saving');
             
-            // Clear any pending save
-            if (saveTimeout) {
-                clearTimeout(saveTimeout);
+            // Clear any pending save for THIS specific input only
+            if (saveTimeouts[timeoutKey]) {
+                clearTimeout(saveTimeouts[timeoutKey]);
             }
             
-            // Wait 800ms after user stops changing values, then save
-            saveTimeout = setTimeout(async () => {
+            // Wait 800ms after user stops changing THIS input, then save
+            saveTimeouts[timeoutKey] = setTimeout(async () => {
                 await saveToServer(currentSchool.id, currentKit, partId, field, value);
-                // Don't re-render here - it overwrites user input!
+                delete saveTimeouts[timeoutKey];
             }, 800);
             
-            // Update discrepancy highlighting on just this row (without re-rendering everything)
+            // Update discrepancy highlighting on just this row
             const row = input.closest('.table-row');
             const part = PARTS.find(p => p.id === partId);
             const startInput = row.querySelector('input[data-field="start"]');
