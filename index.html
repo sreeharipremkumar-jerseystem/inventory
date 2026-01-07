@@ -695,7 +695,8 @@
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
                         school_id: schoolId,
                         kit: kit,
@@ -706,9 +707,7 @@
                     })
                 });
                 
-                const result = await response.json();
-                
-                if (result.success) {
+                if (true) {
                     // Update local cache
                     const key = `${schoolId}_kit${kit}_${partId}`;
                     if (!inventoryCache[key]) {
