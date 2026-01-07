@@ -605,6 +605,7 @@
     </main>
 
     <script>
+        let saveTimeout = null;
         // ==========================================
         // CONFIGURATION - UPDATE THIS URL!
         // ==========================================
@@ -973,10 +974,26 @@
             const field = input.dataset.field;
             const value = input.value;
             
-            await saveToServer(currentSchool.id, currentKit, partId, field, value);
+            // Update local cache immediately (so UI feels responsive)
+            const key = `${currentSchool.id}_kit${currentKit}_${partId}`;
+            if (!inventoryCache[key]) {
+                inventoryCache[key] = { school_id: currentSchool.id, kit: currentKit, part_id: partId, start: '', end: '' };
+            }
+            inventoryCache[key][field] = value;
             
-            // Re-render to update discrepancy highlighting
-            renderInventory();
+            // Show "saving" indicator
+            showSaveIndicator('saving');
+            
+            // Clear any pending save
+            if (saveTimeout) {
+                clearTimeout(saveTimeout);
+            }
+            
+            // Wait 800ms after user stops changing values, then save
+            saveTimeout = setTimeout(async () => {
+                await saveToServer(currentSchool.id, currentKit, partId, field, value);
+                renderInventory(); // Re-render to update discrepancy highlighting
+            }, 800);
         }
 
         // ========== INIT ==========
