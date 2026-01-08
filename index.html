@@ -1077,46 +1077,48 @@
         async function updateValue(input) {
             const partId = input.dataset.part;
             const field = input.dataset.field;
-            const value = input.value;
-            
-            // Unique key for this specific input
-            const timeoutKey = `${partId}_${field}`;
-            
-            // Update local cache immediately (so UI feels responsive)
+        
+            // Use the actual value at save time
             const cacheKey = `${currentSchool.id}_kit${currentKit}_${partId}`;
-            if (!inventoryCache[cacheKey]) {
-                inventoryCache[cacheKey] = { school_id: currentSchool.id, kit: currentKit, part_id: partId, start: '', end: '' };
-            }
-            inventoryCache[cacheKey][field] = value;
-            
-            // Show "saving" indicator
-            showSaveIndicator('saving');
-            
-            // Clear any pending save for THIS specific input only
+        
+            // Clear any pending save for this input
+            const timeoutKey = cacheKey + '_' + field;
             if (saveTimeouts[timeoutKey]) {
                 clearTimeout(saveTimeouts[timeoutKey]);
             }
-            
-            // Wait 800ms after user stops changing THIS input, then save
+        
+            // Update cache immediately
+            if (!inventoryCache[cacheKey]) {
+                inventoryCache[cacheKey] = { school_id: currentSchool.id, kit: currentKit, part_id: partId, start: '', end: '' };
+            }
+            inventoryCache[cacheKey][field] = input.value;
+        
+            // Show saving indicator
+            showSaveIndicator('saving');
+        
+            // Debounce save: wait 800ms of inactivity
             saveTimeouts[timeoutKey] = setTimeout(async () => {
-                await saveToServer(currentSchool.id, currentKit, partId, field, value);
+                // Read the latest value directly from cache
+                const latestValue = inventoryCache[cacheKey][field];
+                await saveToServer(currentSchool.id, currentKit, partId, field, latestValue);
+        
                 delete saveTimeouts[timeoutKey];
             }, 800);
-            
-            // Update discrepancy highlighting on just this row
+        
+            // Highlight discrepancies immediately
             const row = input.closest('.table-row');
             const part = PARTS.find(p => p.id === partId);
-            const startInput = row.querySelector('input[data-field="start"]');
+            const startVal = parseInt(row.querySelector('input[data-field="start"]').value) || part.expected;
             const endInput = row.querySelector('input[data-field="end"]');
-            const startVal = parseInt(startInput.value) || part.expected;
             const endVal = endInput.value !== '' ? parseInt(endInput.value) : null;
-            
+        
             if (endVal !== null && endVal < startVal) {
                 row.classList.add('discrepancy');
             } else {
                 row.classList.remove('discrepancy');
             }
         }
+
 
         // ========== INIT ==========
         (function init() {
