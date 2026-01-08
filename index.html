@@ -614,35 +614,140 @@
         // It will look like: https://script.google.com/macros/s/xxxxx/exec
         
         const SHARED_PASSWORD = 'jerseystem2025';
+
         
         const SCHOOLS = [
-            { id: 'school1', name: 'Lincoln Elementary', kits: 5 },
-            { id: 'school2', name: 'Washington Middle', kits: 8 },
-            { id: 'school3', name: 'Jefferson Academy', kits: 6 },
-            { id: 'school4', name: 'Roosevelt School', kits: 4 },
-            { id: 'school5', name: 'Kennedy Elementary', kits: 7 },
-            { id: 'school6', name: 'Adams Middle', kits: 5 },
-            { id: 'school7', name: 'Madison School', kits: 6 },
-            { id: 'school8', name: 'Monroe Elementary', kits: 4 },
-            { id: 'school9', name: 'Jackson Academy', kits: 8 },
-            { id: 'school10', name: 'Hamilton Middle', kits: 5 }
+            { id: 'school_1', name: 'Lincoln Elementary', kits: 5 },
+            { id: 'school_2', name: 'Washington Middle', kits: 8 },
+            { id: 'school_3', name: 'Jefferson Academy', kits: 6 },
+            { id: 'school_4', name: 'Roosevelt School', kits: 4 },
+            { id: 'school_5', name: 'Kennedy Elementary', kits: 7 },
+            { id: 'school_6', name: 'Adams Middle', kits: 5 },
+            { id: 'school_7', name: 'Madison School', kits: 6 },
+            { id: 'school_8', name: 'Monroe Elementary', kits: 4 },
+            { id: 'school_9', name: 'Jackson Academy', kits: 8 },
+            { id: 'school_10', name: 'Hamilton Middle', kits: 5 }
         ];
 
-        const PARTS = [
-            { id: 'hub', name: 'Large Hub', expected: 1 },
-            { id: 'battery', name: 'Hub Battery', expected: 1 },
-            { id: 'large_motor', name: 'Large Motor', expected: 1 },
-            { id: 'medium_motor', name: 'Medium Motor', expected: 2 },
-            { id: 'distance_sensor', name: 'Distance Sensor', expected: 1 },
-            { id: 'color_sensor', name: 'Color Sensor', expected: 1 },
-            { id: 'force_sensor', name: 'Force Sensor', expected: 1 },
-            { id: 'usb_cable', name: 'USB Cable', expected: 1 },
-            { id: 'wheel', name: 'Large Wheel (ø56)', expected: 4 },
-            { id: 'rubber_band', name: 'Rubber Band', expected: 2 },
-            { id: 'frame_11x15', name: 'Frame 11x15', expected: 2 },
-            { id: 'frame_7x11', name: 'Frame 7x11', expected: 2 },
-            { id: 'frame_5x7', name: 'Frame 5x7', expected: 2 },
-            { id: 'panel', name: 'Panel 11x19', expected: 2 }
+        const PARTS= [
+          // ELECTRONICS
+          { id: 'large_hub', name: 'Large Hub (Programmable Brick)', expected: 1 },
+          { id: 'hub_battery', name: 'Hub Rechargeable Battery', expected: 1 },
+          { id: 'medium_motor', name: 'Medium Motor', expected: 2 },
+          { id: 'large_motor', name: 'Large Motor', expected: 1 },
+          { id: 'color_sensor', name: 'Color Sensor', expected: 1 },
+          { id: 'distance_sensor', name: 'Distance Sensor', expected: 1 },
+          { id: 'force_sensor', name: 'Force Sensor', expected: 1 },
+          { id: 'micro_usb_cable', name: 'Micro USB Cable', expected: 1 },
+        
+          // BEAMS & FRAMES
+          { id: 'beam_3m', name: 'Technic 3m Beam', expected: 6 },
+          { id: 'beam_5m', name: 'Technic 5m Beam', expected: 4 },
+          { id: 'beam_7m', name: 'Technic 7m Beam', expected: 6 },
+          { id: 'beam_9m', name: 'Technic 9m Beam', expected: 4 },
+          { id: 'beam_11m', name: 'Technic 11m Beam', expected: 4 },
+          { id: 'beam_13m', name: 'Technic 13m Beam', expected: 4 },
+          { id: 'beam_15m', name: 'Technic 15m Beam', expected: 6 },
+          { id: 'frame_5x7', name: 'Technic Frame 5x7', expected: 2 },
+          { id: 'frame_7x11', name: 'Technic Frame 7x11', expected: 2 },
+          { id: 'frame_11x15', name: 'Technic Frame 11x15', expected: 1 },
+          { id: 'i_frame_3x5', name: 'Beam I-Frame 3x5', expected: 3 },
+        
+          // ANGULAR BEAMS
+          { id: 'angular_beam_4x4', name: 'Technic Angular Beam 4x4', expected: 4 },
+          { id: 'double_angular_3x7_45', name: 'Double Angular Beam 3x7 (45°)', expected: 4 },
+          { id: 'angular_beam_2x4_90', name: 'Technic Angular Beam 2x4 (90°)', expected: 4 },
+          { id: 'angular_beam_3x7', name: 'Technic Angular Beam 3x7', expected: 2 },
+          { id: 'angular_beam_3x5_90', name: 'Angular Beam 3x5 (90°)', expected: 4 },
+        
+          // AXLES
+          { id: 'cross_axle_2m_snap', name: 'Cross Axle 2m w/Snap', expected: 10 },
+          { id: 'cross_axle_2m_groove', name: 'Cross Axle 2m w/Groove', expected: 8 },
+          { id: 'cross_axle_3m', name: 'Cross Axle 3m', expected: 8 },
+          { id: 'cross_axle_4m', name: 'Cross Axle 4m', expected: 4 },
+          { id: 'cross_axle_5m', name: 'Cross Axle 5m', expected: 4 },
+          { id: 'cross_axle_7m', name: 'Cross Axle 7m', expected: 4 },
+          { id: 'cross_axle_8m', name: 'Cross Axle 8m', expected: 4 },
+          { id: 'cross_axle_9m', name: 'Cross Axle 9m', expected: 4 },
+          { id: 'cross_axle_11m', name: 'Cross Axle 11m', expected: 2 },
+          { id: 'cross_axle_ext_2m', name: 'Cross Axle Extension 2m', expected: 2 },
+        
+          // CONNECTORS & PEGS
+          { id: 'peg_black', name: 'Connector Peg w/Friction (Black)', expected: 72 },
+          { id: 'peg_friction_3m', name: 'Connector Peg w/Friction 3m', expected: 10 },
+          { id: 'peg_blue', name: 'Connector Peg/Cross Axle (Blue)', expected: 20 },
+          { id: 'friction_snap_2m', name: '2m Friction Snap w/Cross Hole', expected: 10 },
+          { id: 'bush_cross_axle', name: 'Bush for Cross Axle', expected: 10 },
+          { id: 'double_cross_block', name: 'Double Cross Block', expected: 4 },
+          { id: 'beam_3m_4snaps', name: 'Beam 3m w/4 Snaps', expected: 12 },
+          { id: 'angular_beam_90_4snaps', name: 'Angular Beam 90° w/4 Snaps', expected: 4 },
+          { id: 'beam_1m_2snaps', name: 'Beam 1m w/2 Snaps', expected: 2 },
+        
+          // WHEELS & GEARS
+          { id: 'wheel_56', name: 'Wheel ø56', expected: 4 },
+          { id: 'tyre_low_narrow', name: 'Tyre Low Narrow ø24x7mm', expected: 2 },
+          { id: 'wedge_belt_wheel', name: 'Wedge-Belt Wheel ø24', expected: 2 },
+          { id: 'tyre_wedge_belt', name: 'Tyre for Wedge-Belt Wheel', expected: 2 },
+          { id: 'rim_narrow', name: 'Rim Narrow ø18x7mm', expected: 2 },
+          { id: 'double_conical_z12', name: 'Double Conical Wheel z12', expected: 2 },
+          { id: 'double_conical_z20', name: 'Double Conical Wheel z20', expected: 2 },
+          { id: 'double_conical_z36', name: 'Double Conical Wheel z36', expected: 2 },
+          { id: 'angled_gear_28', name: 'Angled Gear Wheel z28', expected: 2 },
+          { id: 'rack_13m', name: 'Rack 13m', expected: 2 },
+        
+          // ANGLE & SPECIALTY ELEMENTS
+          { id: 'angle_0', name: 'Angle Element 0° [1]', expected: 4 },
+          { id: 'angle_90', name: 'Angle Element 90° [6]', expected: 4 },
+          { id: 'angle_135', name: 'Angle Element 135° [4]', expected: 4 },
+          { id: 'angle_180', name: 'Angle Element 180° [2]', expected: 4 },
+          { id: 'damper_2m', name: 'Damper 2m', expected: 4 },
+          { id: 'ball_friction_snap', name: 'Ball w/Friction Snap', expected: 4 },
+          { id: 'ball', name: 'Ball', expected: 1 },
+          { id: 'ball_cup', name: 'Ball Cup', expected: 1 },
+          { id: 'track_rod_6m', name: 'Track Rod 6m', expected: 2 },
+          { id: 'flex_hose_19m', name: 'Flex Hose 19m', expected: 2 },
+        
+          // PANELS, PLATES & BRICKS
+          { id: 'panel_11x19', name: 'Panel 11x19', expected: 2 },
+          { id: 'flat_panel_3x11', name: 'Flat Panel 3x11m', expected: 2 },
+          { id: 'bowed_panel_3x11x2', name: 'Bowed Panel 3x11x2', expected: 2 },
+          { id: 'plate_2x16', name: 'Plate 2x16', expected: 2 },
+          { id: 'plate_2x8_holes', name: 'Plate 2x8 w/Holes', expected: 4 },
+          { id: 'plate_round_2x2', name: 'Plate Round 2x2', expected: 4 },
+          { id: 'plate_round_1knob', name: 'Plate Round w/1 Knob', expected: 2 },
+          { id: 't_beam_3x3', name: 'T-Beam 3x3', expected: 4 },
+          { id: 'beam_2m_cross', name: 'Technic 2m Beam w/Cross Hole', expected: 4 },
+        
+          // DECORATIVE & MISC
+          { id: 'kate_minifig', name: 'Kate Minifigure', expected: 1 },
+          { id: 'kyle_minifig', name: 'Kyle Minifigure', expected: 1 },
+          { id: 'brick_round_2x2_white', name: 'Brick Round 2x2 (White)', expected: 4 },
+          { id: 'brick_2x6_bow', name: 'Brick 2x6 w/Bow', expected: 4 },
+          { id: 'roof_tile_1x2x2_3', name: 'Roof Tile 1x2x2/3', expected: 4 },
+          { id: 'satellite_dish_6x6', name: 'Satellite Dish 6x6', expected: 2 },
+          { id: 'bionicle_eye', name: 'Bionicle Eye', expected: 2 },
+          { id: 'rubber_band_yellow', name: 'Rubber Band ø33 (Yellow)', expected: 2 },
+          { id: 'shell_hub_cover', name: 'Shell 6x8x2 (Hub Cover)', expected: 1 },
+          { id: 'shell_left', name: 'Left Shell 3x8x2', expected: 1 },
+          { id: 'shell_right', name: 'Right Shell 3x8x2', expected: 1 },
+        
+          // WIRE CLIPS & COLORED BRICKS
+          { id: 'wire_yellow', name: 'Wire Clip — Yellow', expected: 2 },
+          { id: 'wire_red', name: 'Wire Clip — Red', expected: 2 },
+          { id: 'wire_green', name: 'Wire Clip — Green', expected: 2 },
+          { id: 'wire_magenta', name: 'Wire Clip — Magenta', expected: 2 },
+          { id: 'wire_blue', name: 'Wire Clip — Blue', expected: 2 },
+          { id: 'wire_azur', name: 'Wire Clip — Azur', expected: 2 },
+          { id: 'brick_2x4_yellow', name: 'Brick 2x4 — Yellow', expected: 2 },
+          { id: 'brick_2x4_red', name: 'Brick 2x4 — Red', expected: 2 },
+          { id: 'brick_2x4_green', name: 'Brick 2x4 — Green', expected: 2 },
+          { id: 'brick_2x4_magenta', name: 'Brick 2x4 — Magenta', expected: 2 },
+          { id: 'brick_2x4_blue', name: 'Brick 2x4 — Blue', expected: 2 },
+        
+          // STORAGE & CONTAINER
+          { id: 'storage_box', name: 'Large Storage Box w/Lid', expected: 1 },
+          { id: 'sorting_trays', name: 'Sorting Trays', expected: 2 },
+          { id: 'compartment_labels', name: 'Compartment Labels/Stickers', expected: 1 }
         ];
 
         // ========== STATE ==========
