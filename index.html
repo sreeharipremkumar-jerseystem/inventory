@@ -788,18 +788,24 @@
             }
         }
 
+        // =========================
+        // SERVER SAVE FUNCTION
+        // =========================
+        
         async function saveToServer(schoolId, kit, partId, field, value) {
+            const cacheKey = `${schoolId}_kit${kit}_${partId}`;
+        
+            // Demo mode
             if (API_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
-                // Demo mode - use localStorage
                 saveToLocalStorage(schoolId, kit, partId, field, value);
                 showSaveIndicator('saved');
                 return;
             }
-
+        
             showSaveIndicator('saving');
-            
+        
             try {
-                const response = await fetch(API_URL, {
+                await fetch(API_URL, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -812,30 +818,25 @@
                         user: currentUser
                     })
                 });
-                
-                if (true) {
-                    // Update local cache
-                    const key = `${schoolId}_kit${kit}_${partId}`;
-                    if (!inventoryCache[key]) {
-                        inventoryCache[key] = { school_id: schoolId, kit, part_id: partId, start: '', end: '' };
-                    }
-                    inventoryCache[key][field] = value;
-                    localStorage.setItem('inventory_cache', JSON.stringify(inventoryCache));
-                    
-                    showSaveIndicator('saved');
-                    isOnline = true;
-                } else {
-                    throw new Error(result.error);
+        
+                // Update local cache
+                if (!inventoryCache[cacheKey]) {
+                    inventoryCache[cacheKey] = { school_id: schoolId, kit, part_id: partId, start: '', end: '' };
                 }
+                inventoryCache[cacheKey][field] = value;
+                localStorage.setItem('inventory_cache', JSON.stringify(inventoryCache));
+        
+                showSaveIndicator('saved');
+                isOnline = true;
             } catch (error) {
                 console.error('Save error:', error);
-                // Save to localStorage as fallback
+        
+                // Fallback to localStorage
                 saveToLocalStorage(schoolId, kit, partId, field, value);
                 showSaveIndicator('offline');
                 isOnline = false;
             }
         }
-
         // ========== LOCAL STORAGE FALLBACK ==========
         function loadFromLocalStorage() {
             const cached = localStorage.getItem('inventory_cache');
@@ -1074,20 +1075,20 @@
             }).join('');
         }
 
+        // Keep track of pending saves per part + field + kit + school
+        let saveQueue = {};
+        
+        // Called whenever an input changes
         async function updateValue(input) {
             const partId = input.dataset.part;
             const field = input.dataset.field;
-        
-            // Use the actual value at save time
             const cacheKey = `${currentSchool.id}_kit${currentKit}_${partId}`;
-        
-            // Clear any pending save for this input
             const timeoutKey = cacheKey + '_' + field;
-            if (saveTimeouts[timeoutKey]) {
-                clearTimeout(saveTimeouts[timeoutKey]);
-            }
         
-            // Update cache immediately
+            // Ensure value is a non-negative integer
+            input.value = Math.max(0, parseInt(input.value) || 0);
+        
+            // Update local cache immediately
             if (!inventoryCache[cacheKey]) {
                 inventoryCache[cacheKey] = { school_id: currentSchool.id, kit: currentKit, part_id: partId, start: '', end: '' };
             }
@@ -1096,21 +1097,25 @@
             // Show saving indicator
             showSaveIndicator('saving');
         
-            // Debounce save: wait 800ms of inactivity
-            saveTimeouts[timeoutKey] = setTimeout(async () => {
-                // Read the latest value directly from cache
+            // If a save is already pending for this field, cancel it
+            if (saveQueue[timeoutKey]) {
+                clearTimeout(saveQueue[timeoutKey]);
+            }
+        
+            // Queue a save after 800ms of inactivity
+            saveQueue[timeoutKey] = setTimeout(async () => {
+                // Read latest value from cache
                 const latestValue = inventoryCache[cacheKey][field];
                 await saveToServer(currentSchool.id, currentKit, partId, field, latestValue);
-        
-                delete saveTimeouts[timeoutKey];
+                delete saveQueue[timeoutKey];
             }, 800);
         
-            // Highlight discrepancies immediately
+            // Update discrepancy highlighting immediately
             const row = input.closest('.table-row');
             const part = PARTS.find(p => p.id === partId);
             const startVal = parseInt(row.querySelector('input[data-field="start"]').value) || part.expected;
-            const endInput = row.querySelector('input[data-field="end"]');
-            const endVal = endInput.value !== '' ? parseInt(endInput.value) : null;
+            const endValInput = row.querySelector('input[data-field="end"]').value;
+            const endVal = endValInput !== '' ? parseInt(endValInput) : null;
         
             if (endVal !== null && endVal < startVal) {
                 row.classList.add('discrepancy');
@@ -1118,7 +1123,6 @@
                 row.classList.remove('discrepancy');
             }
         }
-
 
         // ========== INIT ==========
         (function init() {
