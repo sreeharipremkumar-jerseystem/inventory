@@ -241,19 +241,22 @@ function renderKits() {
 }
 
 function getKitStatus(sid, kid) {
-    let hasStart = false, hasEnd = false, hasIssue = false;
+    let startFilled = 0, endFilled = 0, hasIssue = false;
     PARTS.forEach(p => {
         const d = inventoryData[`${sid}_${kid}_${p.id}`];
         if (d) {
-            if (d.start !== undefined && d.start !== '') hasStart = true;
+            if (d.start !== undefined && d.start !== '') startFilled++;
             if (d.end !== undefined && d.end !== '') {
-                hasEnd = true;
+                endFilled++;
                 const sv = d.start !== '' && d.start !== undefined ? parseInt(d.start) : p.expected;
                 if (parseInt(d.end) < sv) hasIssue = true;
             }
         }
     });
-    return hasIssue ? 'issues' : hasEnd ? 'complete' : 'pending';
+    const total = PARTS.length;
+    if (hasIssue) return 'issues';
+    if (endFilled === total) return 'complete';
+    return 'pending';
 }
 
 function getMissing(sid, kid) {
