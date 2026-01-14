@@ -132,34 +132,6 @@ const canEditSemester = (semester) => {
 };
 
 // ========== AUTH ==========
-function handleLogin(e) {
-    e.preventDefault();
-    const email = document.getElementById('email-input').value.trim().toLowerCase();
-    const pw = document.getElementById('password-input').value;
-    
-    document.getElementById('email-error').classList.remove('show');
-    document.getElementById('password-error').classList.remove('show');
-    
-    if (!email.endsWith('@mystemclub.org')) {
-        document.getElementById('email-error').classList.add('show');
-        return;
-    }
-    
-    if (pw === PASSWORDS.admin) {
-        userRole = 'admin';
-    } else if (pw === PASSWORDS.instructor) {
-        userRole = 'instructor';
-    } else {
-        document.getElementById('password-error').classList.add('show');
-        return;
-    }
-    
-    currentUser = email.split('@')[0];
-    localStorage.setItem('js_user', currentUser);
-    localStorage.setItem('js_role', userRole);
-    showScreen('school-screen');
-}
-
 function logout() {
     if (hasUnsavedChanges && !confirm('Unsaved changes will be lost. Continue?')) return;
     currentUser = null;
@@ -600,6 +572,8 @@ function renderPartRow(part, canEdit) {
     }
     
     const cat = CATEGORIES.find(c => c.parts.includes(part));
+    const minusDis = !canEdit || numVal === null || numVal <= 0 ? 'disabled' : '';
+    const plusDis = !canEdit || numVal >= part.expected ? 'disabled' : '';
     
     return `
         <div class="part-row ${!canEdit ? 'locked' : ''}" data-part="${part.id}">
@@ -612,4 +586,164 @@ function renderPartRow(part, canEdit) {
             </div>
             <div class="part-controls">
                 <div class="counter">
-                    <button class="counter-btn" onclick="adjust('${part.id}',-1)" ${!canEdit || numVal ===
+                    <button class="counter-btn" onclick="adjust('${part.id}',-1)" ${minusDis}>−</button>
+                    <input type="text" class="counter-value" value="${numVal !== null ? numVal : ''}" 
+                           data-part="${part.id}" onchange="handleInput(this)" 
+                           onfocus="this.select()" inputmode="numeric" ${!canEdit ? 'disabled' : ''}>
+                    <button class="counter-btn" onclick="adjust('${part.id}',1)" ${plusDis}>+</button>
+                </div>
+                ${badge}
+            </div>
+        </div>
+    `;
+}
+
+function toggleCategory(header) {
+    header.parentElement.classList.toggle('collapsed');
+}
+
+function adjust(partId, delta) {
+    if (!canEditSemester(currentSemester)) return;
+    const key = `${currentSchool.id}_${currentKit.id}_${partId}`;
+    const part = PARTS.find(p => p.id === partId);
+    const data = inventoryData[key] || {};
+    const pending = pendingChanges[key] || {};
+    let val = pending[currentSemester] !== undefined ? pending[currentSemester] : (data[currentSemester] ?? '');
+    val = val === '' ? part.expected : parseInt(val);
+    val = Math.max(0, Math.min(val + delta, part.expected));
+    if (!pendingChanges[key]) pendingChanges[key] = {};
+    pendingChanges[key][currentSemester] = val;
+    hasUnsavedChanges = true;
+    updateSaveStatus();
+    const row = document.querySelector(`[data-part="${partId}"]`);
+    if (row) row.outerHTML = renderPartRow(part, canEditSemester(currentSemester));
+}
+
+function handleInput(input) {
+    if (!canEditSemester(currentSemester)) return;
+    const partId = input.dataset.part;
+    const part = PARTS.find(p => p.id === partId);
+    const key = `${currentSchool.id}_${currentKit.id}_${partId}`;
+    let val = input.value.trim();
+    if (!pendingChanges[key]) pendingChanges[key] = {};
+    if (val === '') {
+        pendingChanges[key][currentSemester] = '';
+    } else {
+        val = Math.max(0, Math.min(parseInt(val) || 0, part.expected));
+        pendingChanges[key][currentSemester] = val;
+    }
+    hasUnsavedChanges = true;
+    updateSaveStatus();
+    const row = document.querySelector(`[data-part="${partId}"]`);
+    if (row) row.outerHTML = renderPartRow(part, canEditSemester(currentSemester));
+}
+
+function updateSaveStatus() {
+    const status = document.getElementById('save-status');
+    const text = document.getElementById('save-text');
+    const canEdit = canEditSemester(currentSemester);
+    
+    if (!canEdit && !isAdmin()) {
+        status.className = 'save-status locked';
+        text.textContent = '🔒 Locked';
+    } else if (hasUnsavedChanges) {
+        status.className = 'save-status unsaved';
+        text.textContent = 'Unsaved';
+    } else {
+        status.className = 'save-status saved';
+        text.textContent = 'Saved';
+    }
+}
+
+function saveChanges() {
+    if (!canEditSemester(currentSemester) && !isAdmin()) return;
+    Object.keys(pendingChanges).forEach(key => {
+        if (!inventoryData[key]) inventoryData[key] = {};
+        Object.assign(inventoryData[key], pendingChanges[key]);
+    });
+    saveData();
+    pendingChanges = {};
+    hasUnsavedChanges = false;
+    updateSaveStatus();
+    document.getElementById('save-text').textContent = '✓ Saved!';
+    setTimeout(() => { if (!hasUnsavedChanges) updateSaveStatus(); }, 1500);
+}
+
+function confirmClear() {
+    if (!canEditSemester(currentSemester) && !isAdmin()) return;
+    openModal('confirm-clear-modal');
+}
+
+function clearInventory() {
+    PARTS.forEach(p => {
+        const key = `${currentSchool.id}_${currentKit.id}_${p.id}`;
+        if (!pendingChanges[key]) pendingChanges[key] = {};
+        pendingChanges[key][currentSemester] = '';
+    });
+    hasUnsavedChanges = true;
+    closeModal('confirm-clear-modal');
+    renderInventory();
+    updateInventoryUI();
+}
+
+// ========== MODALS ==========
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('active'); });
+});
+
+// ========== AUTO-BACKUP ==========
+setInterval(() => {
+    if (hasUnsavedChanges) {
+        Object.keys(pendingChanges).forEach(key => {
+            if (!inventoryData[key]) inventoryData[key] = {};
+            Object.assign(inventoryData[key], pendingChanges[key]);
+        });
+        localStorage.setItem('js_inventory', JSON.stringify(inventoryData));
+    }
+}, 30000);
+
+// ========== INIT ==========
+loadData();
+const savedUser = localStorage.getItem('js_user');
+const savedRole = localStorage.getItem('js_role');
+if (savedUser && savedRole) {
+    currentUser = savedUser;
+    userRole = savedRole;
+    showScreen('school-screen');
+}
+
+// Login form handler
+document.getElementById('login-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const email = document.getElementById('email-input').value.trim().toLowerCase();
+    const pw = document.getElementById('password-input').value;
+    
+    document.getElementById('email-error').classList.remove('show');
+    document.getElementById('password-error').classList.remove('show');
+    
+    if (!email.endsWith('@mystemclub.org')) {
+        document.getElementById('email-error').classList.add('show');
+        return;
+    }
+    
+    if (pw === PASSWORDS.admin) {
+        userRole = 'admin';
+    } else if (pw === PASSWORDS.instructor) {
+        userRole = 'instructor';
+    } else {
+        document.getElementById('password-error').classList.add('show');
+        return;
+    }
+    
+    currentUser = email.split('@')[0];
+    localStorage.setItem('js_user', currentUser);
+    localStorage.setItem('js_role', userRole);
+    showScreen('school-screen');
+});
+
+window.addEventListener('beforeunload', e => {
+    if (hasUnsavedChanges) { e.preventDefault(); e.returnValue = ''; }
+});
